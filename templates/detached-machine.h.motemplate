@@ -1,0 +1,76 @@
+// DO NOT EDIT. This file is machine-generated and constantly overwritten.
+// Make changes to <$managedObjectClassName$Detached>.h instead.
+
+<$foreach Relationship noninheritedRelationships do$>@class <$Relationship.destinationEntity.managedObjectClassName$Detached>;
+<$endforeach do$>
+
+<$if userInfo.documentation$>
+/**
+ * <$userInfo.documentation$>
+ *
+ * <$userInfo.discussion$>
+ */
+<$endif$>
+@interface _<$managedObjectClassName$> : NSObject {}
+@property (nonatomic, readonly, strong) NSManagedObjectID *managedObjectID;
+
+<$foreach Attribute noninheritedAttributes do$>
+<$if Attribute.userInfo.documentation$>
+/**
+ * <$Attribute.userInfo.documentation$>
+ *
+ * <$Attribute.userInfo.discussion$>
+ */
+<$endif$>
+<$if Attribute.hasDefinedAttributeType$>
+  <$if Attribute.hasScalarAttributeType$>
+    <$if Attribute.isReadonly$>
+      @property (atomic, readonly) <$Attribute.scalarAttributeType$> <$Attribute.name$>;
+      - (<$Attribute.scalarAttributeType$>)<$Attribute.name$>;
+    <$else$>
+      @property (atomic) <$Attribute.scalarAttributeType$> <$Attribute.name$>;
+      - (<$Attribute.scalarAttributeType$>)<$Attribute.name$>;
+      - (void)set<$Attribute.name.initialCapitalString$>:(<$Attribute.scalarAttributeType$>)value_;
+    <$endif$>
+  <$else$>
+    <$if TemplateVar.arc$>
+      <$if Attribute.isReadonly$>
+        @property (nonatomic, strong, readonly) <$Attribute.objectAttributeType$> <$Attribute.name$>;
+      <$else$>
+        @property (nonatomic, strong) <$Attribute.objectAttributeType$> <$Attribute.name$>;
+      <$endif$>
+    <$else$>
+      <$if Attribute.isReadonly$>
+        @property (nonatomic, retain, readonly) <$Attribute.objectAttributeType$> <$Attribute.name$>;
+      <$else$>
+        @property (nonatomic, retain) <$Attribute.objectAttributeType$> <$Attribute.name$>;
+      <$endif$>
+    <$endif$>
+  <$endif$>
+<$endif$>
+<$endforeach do$>
+
+<$foreach Relationship noninheritedRelationships do$>
+<$if Relationship.userInfo.documentation$>
+/**
+ * <$Relationship.userInfo.documentation$>
+ *
+ * <$Relationship.userInfo.discussion$>
+ */
+<$endif$>
+<$if Relationship.isToMany$>
+<$if TemplateVar.arc$>
+@property (nonatomic, strong) <$Relationship.immutableCollectionClassName$> *<$Relationship.name$>;
+<$else$>
+@property (nonatomic, retain) <$Relationship.immutableCollectionClassName$> *<$Relationship.name$>;
+<$endif$>
+- (<$Relationship.mutableCollectionClassName$>*)<$Relationship.name$>Set;
+<$else$>
+<$if TemplateVar.arc$>
+@property (nonatomic, strong) <$Relationship.destinationEntity.managedObjectClassName$Detached> *<$Relationship.name$>;
+<$else$>
+@property (nonatomic, retain) <$Relationship.destinationEntity.managedObjectClassName$Detached> *<$Relationship.name$>;
+<$endif$>
+<$endif$>
+<$endforeach do$>
+@end

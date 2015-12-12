@@ -30,7 +30,48 @@ const struct <$managedObjectClassName$>UserInfo <$managedObjectClassName$>UserIn
 @implementation <$managedObjectClassName$>ID
 @end
 
+@interface _<$managedObjectClassName$>()
+
+@property (nonatomic, readwrite) <$managedObjectClassName$Detached> *detachedObject;
+
+@end
+
 @implementation _<$managedObjectClassName$>
+
+- (void)didTurnInToFault {
+	[super didTurnInToFault];
+        _detachedObject = nil;
+}
+
+- (<$managedObjectClassName$Detached> *)detachedObject {
+    if (_detachedObject == nil) {
+        _detachedObject = [self buildDetachedObject];
+    }
+    return _detachedObject;
+}
+
+- (<$managedObjectClassName$Detached> *)buildDetachedObject {
+
+	<$managedObjectClassName$Detached> *result = [<$managedObjectClassName$Detached> * new];
+<$if !TemplateVar.arc$>
+	[result autorelease];
+<$endif$>
+
+<$foreach Attribute noninheritedAttributes do$>
+<$if Attribute.hasDefinedAttributeType$>
+	result.<$Attribute.name$> = self.<$Attribute.name$>;
+<$endif$>
+<$endforeach do$>
+
+<$foreach Relationship noninheritedRelationships do$>
+<$if Relationship.isToMany$>
+	result.<$Relationship.name$> = [self.<$Relationship.name$> valueForKey:@"detachedObject"];
+<$else$>
+	result.<$Relationship.name$> = self.<$Relationship.name$>.detachedObject;
+<$endforeach do$>
+
+	return result;
+}
 
 + (id)insertInManagedObjectContext:(NSManagedObjectContext*)moc_ {
 	NSParameterAssert(moc_);

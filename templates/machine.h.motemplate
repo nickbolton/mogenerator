@@ -186,4 +186,7 @@ extern const struct <$managedObjectClassName$>UserInfo {<$foreach UserInfo userI
 - (void)setPrimitive<$Relationship.name.initialCapitalString$>:(<$Relationship.destinationEntity.managedObjectClassName$>*)value;
 <$endif$>
 <$endforeach do$>
+
+@property (nonatomic, readonly) <$managedObjectClassName$Detached> *detachedObject;
+
 @end

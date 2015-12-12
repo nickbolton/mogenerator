@@ -1,0 +1,15 @@
+#import "<$managedObjectClassName$Detached>.h"
+
+
+@interface <$managedObjectClassName$Detached> ()
+
+// Private interface goes here.
+
+@end
+
+
+@implementation <$managedObjectClassName$Detached>
+
+// Custom logic goes here.
+
+@end

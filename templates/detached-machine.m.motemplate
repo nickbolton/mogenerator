@@ -1,0 +1,12 @@
+// DO NOT EDIT. This file is machine-generated and constantly overwritten.
+// Make changes to <$managedObjectClassName$>.m instead.
+
+#import "_<$managedObjectClassName$Detached>.h"
+
+@implementation <$managedObjectClassName$>ID
+
+@end
+
+@implementation _<$managedObjectClassName$>
+
+@end

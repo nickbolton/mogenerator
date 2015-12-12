@@ -1035,12 +1035,18 @@ NSString *ApplicationSupportSubdirectoryName = @"mogenerator";
 
     int machineFilesGenerated = 0;
     int humanFilesGenerated = 0;
+    int detachedMachineFilesGenerated = 0;
+    int detachedHumanFilesGenerated = 0;
 
     if (model) {
         MiscMergeEngine *machineH = nil;
         MiscMergeEngine *machineM = nil;
         MiscMergeEngine *humanH = nil;
         MiscMergeEngine *humanM = nil;
+        MiscMergeEngine *detachedMachineH = nil;
+        MiscMergeEngine *detachedMachineM = nil;
+        MiscMergeEngine *detachedHumanH = nil;
+        MiscMergeEngine *detachedHumanM = nil;
 
         if (_swift) {
             machineH = engineWithTemplateDesc([self templateDescNamed:@"machine.swift.motemplate"]);
@@ -1056,6 +1062,14 @@ NSString *ApplicationSupportSubdirectoryName = @"mogenerator";
             assert(humanH);
             humanM = engineWithTemplateDesc([self templateDescNamed:@"human.m.motemplate"]);
             assert(humanM);
+            detachedMachineH = engineWithTemplateDesc([self templateDescNamed:@"detached-machine.h.motemplate"]);
+            assert(detachedMachineH);
+            detachedMachineM = engineWithTemplateDesc([self templateDescNamed:@"detached-machine.m.motemplate"]);
+            assert(detachedMachineM);
+            detachedHumanH = engineWithTemplateDesc([self templateDescNamed:@"detached-human.h.motemplate"]);
+            assert(detachedHumanH);
+            detachedHumanM = engineWithTemplateDesc([self templateDescNamed:@"detached-human.m.motemplate"]);
+            assert(detachedHumanM);
         }
 
         // Add the template var dictionary to each of the merge engines
@@ -1063,33 +1077,54 @@ NSString *ApplicationSupportSubdirectoryName = @"mogenerator";
         [machineM setEngineValue:templateVar forKey:kTemplateVar];
         [humanH setEngineValue:templateVar forKey:kTemplateVar];
         [humanM setEngineValue:templateVar forKey:kTemplateVar];
+        [detachedMachineH setEngineValue:templateVar forKey:kTemplateVar];
+        [detachedMachineM setEngineValue:templateVar forKey:kTemplateVar];
+        [detachedHumanH setEngineValue:templateVar forKey:kTemplateVar];
+        [detachedHumanM setEngineValue:templateVar forKey:kTemplateVar];
 
         NSMutableArray  *humanMFiles = [NSMutableArray array],
                         *humanHFiles = [NSMutableArray array],
                         *machineMFiles = [NSMutableArray array],
-                        *machineHFiles = [NSMutableArray array];
+                        *machineHFiles = [NSMutableArray array],
+                        *detachedHumanMFiles = [NSMutableArray array],
+                        *detachedHumanHFiles = [NSMutableArray array],
+                        *detachedMachineMFiles = [NSMutableArray array],
+                        *detachedMachineHFiles = [NSMutableArray array];
+
 
         nsenumerate ([model entitiesWithACustomSubclassInConfiguration:configuration verbose:YES], NSEntityDescription, entity) {
             NSString *generatedMachineH = [machineH executeWithObject:entity sender:nil];
             NSString *generatedMachineM = [machineM executeWithObject:entity sender:nil];
             NSString *generatedHumanH = [humanH executeWithObject:entity sender:nil];
             NSString *generatedHumanM = [humanM executeWithObject:entity sender:nil];
+            NSString *generatedDetachedMachineH = [detachedMachineH executeWithObject:entity sender:nil];
+            NSString *generatedDetachedMachineM = [detachedMachineM executeWithObject:entity sender:nil];
+            NSString *generatedDetachedHumanH = [detachedHumanH executeWithObject:entity sender:nil];
+            NSString *generatedDetachedHumanM = [detachedHumanM executeWithObject:entity sender:nil];
 
             // remove unnecessary empty lines
             generatedMachineH = [generatedMachineH stringByReplacingOccurrencesOfRegex:@"([ \t]*(\n|\r|\r\n)){2,}" withString:@"\n\n"];
             generatedMachineM = [generatedMachineM stringByReplacingOccurrencesOfRegex:@"([ \t]*(\n|\r|\r\n)){2,}" withString:@"\n\n"];
             generatedHumanH = [generatedHumanH stringByReplacingOccurrencesOfRegex:@"([ \t]*(\n|\r|\r\n)){2,}" withString:@"\n\n"];
             generatedHumanM = [generatedHumanM stringByReplacingOccurrencesOfRegex:@"([ \t]*(\n|\r|\r\n)){2,}" withString:@"\n\n"];
+            generatedDetachedMachineH = [generatedDetachedMachineH stringByReplacingOccurrencesOfRegex:@"([ \t]*(\n|\r|\r\n)){2,}" withString:@"\n\n"];
+            generatedDetachedMachineM = [generatedDetachedMachineM stringByReplacingOccurrencesOfRegex:@"([ \t]*(\n|\r|\r\n)){2,}" withString:@"\n\n"];
+            generatedDetachedHumanH = [generatedDetachedHumanH stringByReplacingOccurrencesOfRegex:@"([ \t]*(\n|\r|\r\n)){2,}" withString:@"\n\n"];
+            generatedDetachedHumanM = [generatedDetachedHumanM stringByReplacingOccurrencesOfRegex:@"([ \t]*(\n|\r|\r\n)){2,}" withString:@"\n\n"];
 
             NSString *entityClassName = [entity managedObjectClassName];
             BOOL machineDirtied = NO;
+            BOOL detachedMachineDirtied = NO;
 
             // Machine header files.
             NSString *extension = (_swift ? @"swift" : @"h");
             NSString *machineHFileName = [machineDir stringByAppendingPathComponent:
-                                    [NSString stringWithFormat:@"_%@.%@", entityClassName, extension]];
+                                          [NSString stringWithFormat:@"_%@.%@", entityClassName, extension]];
+            NSString *detachedMachineHFileName = [machineDir stringByAppendingPathComponent:
+                                                  [NSString stringWithFormat:@"_%@Detached.%@", entityClassName, extension]];
             if (_listSourceFiles) {
                 [machineHFiles addObject:machineHFileName];
+                [detachedMachineHFiles addObject:detachedMachineHFileName];
             } else {
                 if (![fm regularFileExistsAtPath:machineHFileName] || ![generatedMachineH isEqualToString:[NSString stringWithContentsOfFile:machineHFileName encoding:NSUTF8StringEncoding error:nil]]) {
                     //  If the file doesn't exist or is different than what we just generated, write it out.
@@ -1097,13 +1132,20 @@ NSString *ApplicationSupportSubdirectoryName = @"mogenerator";
                     machineDirtied = YES;
                     machineFilesGenerated++;
                 }
+                if (![fm regularFileExistsAtPath:detachedMachineHFileName] || ![generatedDetachedMachineH isEqualToString:[NSString stringWithContentsOfFile:detachedMachineHFileName encoding:NSUTF8StringEncoding error:nil]]) {
+                    //  If the file doesn't exist or is different than what we just generated, write it out.
+                    [generatedDetachedMachineH writeToFile:detachedMachineHFileName atomically:NO encoding:NSUTF8StringEncoding error:nil];
+                    detachedMachineDirtied = YES;
+                    detachedMachineFilesGenerated++;
+                }
             }
 
             // Machine source files.
             NSString *machineMFileName = nil;
+            NSString *detachedMachineMFileName = nil;
             if (!_swift) {
                 machineMFileName = [machineDir stringByAppendingPathComponent:
-                    [NSString stringWithFormat:@"_%@.m", entityClassName]];
+                                    [NSString stringWithFormat:@"_%@.m", entityClassName]];
                 if (_listSourceFiles) {
                     [machineMFiles addObject:machineMFileName];
                 } else {
@@ -1114,13 +1156,35 @@ NSString *ApplicationSupportSubdirectoryName = @"mogenerator";
                         machineFilesGenerated++;
                     }
                 }
+                detachedMachineMFileName = [machineDir stringByAppendingPathComponent:
+                                            [NSString stringWithFormat:@"_%@Detached.m", entityClassName]];
+                if (_listSourceFiles) {
+                    [machineMFiles addObject:machineMFileName];
+                    [detachedMachineMFiles addObject:detachedMachineMFileName];
+                } else {
+                    if (![fm regularFileExistsAtPath:machineMFileName] || ![generatedMachineM isEqualToString:[NSString stringWithContentsOfFile:machineMFileName encoding:NSUTF8StringEncoding error:nil]]) {
+                        //  If the file doesn't exist or is different than what we just generated, write it out.
+                        [generatedMachineM writeToFile:machineMFileName atomically:NO encoding:NSUTF8StringEncoding error:nil];
+                        machineDirtied = YES;
+                        machineFilesGenerated++;
+                    }
+                    if (![fm regularFileExistsAtPath:detachedMachineMFileName] || ![generatedDetachedMachineM isEqualToString:[NSString stringWithContentsOfFile:detachedMachineMFileName encoding:NSUTF8StringEncoding error:nil]]) {
+                        //  If the file doesn't exist or is different than what we just generated, write it out.
+                        [generatedDetachedMachineM writeToFile:detachedMachineMFileName atomically:NO encoding:NSUTF8StringEncoding error:nil];
+                        detachedMachineDirtied = YES;
+                        detachedMachineFilesGenerated++;
+                    }
+                }
             }
 
             // Human header files.
             NSString *humanHFileName = [humanDir stringByAppendingPathComponent:
-                [NSString stringWithFormat:@"%@.%@", entityClassName, extension]];
+                                        [NSString stringWithFormat:@"%@.%@", entityClassName, extension]];
+            NSString *detachedHumanHFileName = [humanDir stringByAppendingPathComponent:
+                                                [NSString stringWithFormat:@"%@Detached.%@", entityClassName, extension]];
             if (_listSourceFiles) {
                 [humanHFiles addObject:humanHFileName];
+                [detachedHumanHFiles addObject:detachedHumanHFileName];
             } else {
                 if ([fm regularFileExistsAtPath:humanHFileName]) {
                     if (machineDirtied)
@@ -1128,6 +1192,13 @@ NSString *ApplicationSupportSubdirectoryName = @"mogenerator";
                 } else {
                     [generatedHumanH writeToFile:humanHFileName atomically:NO encoding:NSUTF8StringEncoding error:nil];
                     humanFilesGenerated++;
+                }
+                if ([fm regularFileExistsAtPath:detachedHumanHFileName]) {
+                    if (detachedMachineDirtied)
+                        [fm touchPath:detachedHumanHFileName];
+                } else {
+                    [generatedDetachedHumanH writeToFile:detachedHumanHFileName atomically:NO encoding:NSUTF8StringEncoding error:nil];
+                    detachedHumanFilesGenerated++;
                 }
             }
 
@@ -1156,11 +1227,37 @@ NSString *ApplicationSupportSubdirectoryName = @"mogenerator";
                 [mfileContent appendFormat:@"#import \"%@\"\n#import \"%@\"\n",
                     [humanMFileName lastPathComponent], [machineMFileName lastPathComponent]];
                 [hfileContent appendFormat:@"#import \"%@\"\n", [humanHFileName lastPathComponent]];
+                
+                //  Detached Human source files.
+                NSString *detachedHumanMFileName = [humanDir stringByAppendingPathComponent:
+                                                    [NSString stringWithFormat:@"%@Detached.m", entityClassName]];
+                NSString *detachedHumanMMFileName = [humanDir stringByAppendingPathComponent:
+                                                     [NSString stringWithFormat:@"%@Detached.mm", entityClassName]];
+                if (![fm regularFileExistsAtPath:detachedHumanMFileName] && [fm regularFileExistsAtPath:detachedHumanMMFileName]) {
+                    //  Allow .mm human files as well as .m files.
+                    detachedHumanMFileName = detachedHumanMMFileName;
+                }
+                if (_listSourceFiles) {
+                    [humanMFiles addObject:humanMFileName];
+                    [detachedHumanMFiles addObject:detachedHumanMFileName];
+                } else {
+                    if ([fm regularFileExistsAtPath:detachedHumanMFileName]) {
+                        if (detachedMachineDirtied)
+                            [fm touchPath:detachedHumanMFileName];
+                    } else {
+                        [generatedDetachedHumanM writeToFile:detachedHumanMFileName atomically:NO encoding:NSUTF8StringEncoding error:nil];
+                        detachedHumanFilesGenerated++;
+                    }
+                }
+                
+                [mfileContent appendFormat:@"#import \"%@\"\n#import \"%@\"\n",
+                 [detachedHumanMFileName lastPathComponent], [machineMFileName lastPathComponent]];
+                [hfileContent appendFormat:@"#import \"%@\"\n", [detachedHumanHFileName lastPathComponent]];
             }
         }
 
         if (_listSourceFiles) {
-            NSArray *filesList = [NSArray arrayWithObjects:humanMFiles, humanHFiles, machineMFiles, machineHFiles, nil];
+            NSArray *filesList = [NSArray arrayWithObjects:humanMFiles, humanHFiles, machineMFiles, machineHFiles, detachedHumanMFiles, detachedHumanHFiles, detachedMachineMFiles, detachedMachineHFiles, nil];
             nsenumerate (filesList, NSArray, files) {
                 nsenumerate (files, NSString, fileName) {
                     ddprintf(@"%@\n", fileName);
